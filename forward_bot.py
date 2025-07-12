@@ -5,7 +5,7 @@ from flask import Flask
 from telegram import Update
 from telegram.ext import Application, MessageHandler, CommandHandler, ContextTypes, filters
 
-BOT_TOKEN = os.getenv("BOT_TOKEN", "kjfkerk875765JHGJH75765JHVHG^%$^%%")  # or load from env
+BOT_TOKEN = os.getenv("BOT_TOKEN", "7784625461:AAEzgCgFh-ZGpJzehQ8ZVcWwlEIOq-Cbc_w")  # or load from env
 SOURCE_GROUP_ID = -4873981826  # Replace with your source group ID
 GROUPS_FILE = 'groups.json'
 
