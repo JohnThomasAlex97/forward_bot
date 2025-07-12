@@ -1,11 +1,25 @@
 import json
+import os
+from threading import Thread
+from flask import Flask
 from telegram import Update
 from telegram.ext import Application, MessageHandler, CommandHandler, ContextTypes, filters
 
-BOT_TOKEN = '7784625461:AAEzgCgFh-ZGpJzehQ8ZVcWwlEIOq-Cbc_w'
+BOT_TOKEN = os.getenv("BOT_TOKEN", "kjfkerk875765JHGJH75765JHVHG^%$^%%")  # or load from env
 SOURCE_GROUP_ID = -4873981826  # Replace with your source group ID
 GROUPS_FILE = 'groups.json'
 
+# ----- Flask Setup (for Render) -----
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "🤖 Telegram bot is running!"
+
+def run_flask():
+    app.run(host='0.0.0.0', port=10000)
+
+# ----- Group Management -----
 def load_groups():
     try:
         with open(GROUPS_FILE, 'r') as f:
@@ -17,6 +31,7 @@ def save_groups(groups):
     with open(GROUPS_FILE, 'w') as f:
         json.dump(groups, f)
 
+# ----- Bot Handlers -----
 async def register(update: Update, context: ContextTypes.DEFAULT_TYPE):
     group_id = update.effective_chat.id
     groups = load_groups()
@@ -40,10 +55,15 @@ async def forward_from_source(update: Update, context: ContextTypes.DEFAULT_TYPE
             except Exception as e:
                 print(f"❌ Failed to forward to {group_id}: {e}")
 
+# ----- Main -----
 def main():
+    # Start Flask server in a thread
+    Thread(target=run_flask).start()
+
     app = Application.builder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("register", register))
     app.add_handler(MessageHandler(filters.ALL, forward_from_source))
+
     print("🤖 Bot is running...")
     app.run_polling()
 
