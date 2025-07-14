@@ -1,3 +1,4 @@
+
 import json
 import os
 from threading import Thread
@@ -5,8 +6,8 @@ from flask import Flask
 from telegram import Update
 from telegram.ext import Application, MessageHandler, CommandHandler, ContextTypes, filters
 
-BOT_TOKEN = os.getenv("BOT_TOKEN", "7784625461:AAEzgCgFh-ZGpJzehQ8ZVcWwlEIOq-Cbc_w")  # or load from env
-SOURCE_GROUP_ID = -4873981826  # Replace with your source group ID
+BOT_TOKEN = os.getenv("BOT_TOKEN", "7784625461:AAEzgCgFh-ZGpJzehQ8ZVcWwlEIOq-Cbc_w")
+SOURCE_GROUP_ID = -4873981826
 GROUPS_FILE = 'groups.json'
 
 # ----- Flask Setup (for Render) -----
@@ -17,7 +18,8 @@ def home():
     return "🤖 Telegram bot is running!"
 
 def run_flask():
-    app.run(host='0.0.0.0', port=10000)
+    port = int(os.environ.get("PORT", 10000))  # ✅ Use Render-assigned port
+    app.run(host='0.0.0.0', port=port)
 
 # ----- Group Management -----
 def load_groups():
@@ -60,12 +62,12 @@ def main():
     # Start Flask server in a thread
     Thread(target=run_flask).start()
 
-    app = Application.builder().token(BOT_TOKEN).build()
-    app.add_handler(CommandHandler("register", register))
-    app.add_handler(MessageHandler(filters.ALL, forward_from_source))
+    bot_app = Application.builder().token(BOT_TOKEN).build()
+    bot_app.add_handler(CommandHandler("register", register))
+    bot_app.add_handler(MessageHandler(filters.ALL, forward_from_source))
 
     print("🤖 Bot is running...")
-    app.run_polling()
+    bot_app.run_polling()
 
 if __name__ == '__main__':
     main()
