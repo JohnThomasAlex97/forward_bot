@@ -1,4 +1,5 @@
-
+import requests
+import time
 import json
 import os
 from threading import Thread
@@ -57,17 +58,31 @@ async def forward_from_source(update: Update, context: ContextTypes.DEFAULT_TYPE
             except Exception as e:
                 print(f"❌ Failed to forward to {group_id}: {e}")
 
+def keep_alive():
+    while True:
+        try:
+            requests.get("https://forward-bot-08r1.onrender.com/")  # use your Render URL
+            print("🔁 Self-ping successful")
+        except Exception as e:
+            print(f"⚠️ Self-ping failed: {e}")
+        time.sleep(300)  # 5 minutes
+
 # ----- Main -----
 def main():
     # Start Flask server in a thread
     Thread(target=run_flask).start()
 
+    # Start self-ping thread to keep Render awake
+    Thread(target=keep_alive).start()  # ✅ <--- this was missing
+
+    # Start Telegram bot
     bot_app = Application.builder().token(BOT_TOKEN).build()
     bot_app.add_handler(CommandHandler("register", register))
     bot_app.add_handler(MessageHandler(filters.ALL, forward_from_source))
 
     print("🤖 Bot is running...")
     bot_app.run_polling()
+
 
 if __name__ == '__main__':
     main()
