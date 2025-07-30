@@ -4,19 +4,17 @@ import json
 import time
 import requests
 import threading
-from flask import Flask
-from urllib.parse import urlparse
-
 from dotenv import load_dotenv
-load_dotenv()
 
-from telegram import Update, MessageEntity
+from telegram import Update
 from telegram.constants import ChatType
 from telegram.ext import (
     Application, CommandHandler, MessageHandler, ContextTypes, filters
 )
 
-# ---------- Config ----------
+# ---------- Load Env ----------
+load_dotenv()
+
 BOT_TOKEN = os.environ["BOT_TOKEN"]
 SOURCE_GROUP_ID = int(os.environ.get("SOURCE_GROUP_ID", "-4873981826"))
 REGISTRATION_KEY = os.environ.get("REGISTRATION_KEY")
@@ -54,28 +52,6 @@ def looks_suspicious(update: Update) -> bool:
         if re.search(pat, text, flags=re.I):
             return True
     return False
-
-# ---------- Flask ----------
-app = Flask(__name__)
-
-@app.route("/")
-def home():
-    return "🤖 Bot is running!"
-
-def run_flask():
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
-
-def keep_alive():
-    if not RENDER_URL:
-        return
-    while True:
-        try:
-            requests.get(RENDER_URL, timeout=10)
-            print("🔁 Self-ping successful")
-        except Exception as e:
-            print(f"⚠️ Self-ping failed: {e}")
-        time.sleep(300)
 
 # ---------- Handlers ----------
 async def register(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -133,23 +109,21 @@ async def forward_from_source(update: Update, context: ContextTypes.DEFAULT_TYPE
 
 # ---------- Main ----------
 def main():
-    threading.Thread(target=run_flask, daemon=True).start()
-    threading.Thread(target=keep_alive, daemon=True).start()
-
     app_bot = Application.builder().token(BOT_TOKEN).build()
     app_bot.add_handler(CommandHandler("register", register))
     app_bot.add_handler(MessageHandler(filters.ALL & ~filters.StatusUpdate.ALL, forward_from_source))
 
-    print("🤖 Debug bot running…")
+    print("🤖 Bot is running…")
 
     if LOCAL_TEST:
+        # Local polling for development
         app_bot.run_polling(allowed_updates=Update.ALL_TYPES)
     else:
-        webhook_url = f"{RENDER_URL}/webhook"
+        # Production: use webhook (no Flask needed)
         app_bot.run_webhook(
             listen="0.0.0.0",
             port=int(os.environ.get("PORT", 10000)),
-            webhook_url=webhook_url,
+            webhook_url=RENDER_URL,
             allowed_updates=Update.ALL_TYPES
         )
 
