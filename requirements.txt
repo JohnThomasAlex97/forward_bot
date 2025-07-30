@@ -1,4 +1,5 @@
-python-telegram-bot==20.3
-flask
+python-telegram-bot[webhooks]==20.8
+Flask
+python-dotenv
 requests
 python-dotenv
