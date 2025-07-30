@@ -7,6 +7,9 @@ import threading
 from flask import Flask
 from urllib.parse import urlparse
 
+from dotenv import load_dotenv  # ✅ for .env support
+load_dotenv()  # ✅ loads values from .env if running locally
+
 from telegram import Update, MessageEntity
 from telegram.constants import ChatType
 from telegram.ext import (
