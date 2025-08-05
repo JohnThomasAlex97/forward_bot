@@ -2,7 +2,6 @@ import os
 import re
 import json
 import time
-import requests
 import threading
 from dotenv import load_dotenv
 
@@ -38,12 +37,18 @@ def save_groups(groups):
         with open(GROUPS_FILE, "w") as f:
             json.dump(groups, f)
 
+def save_blocked_message(update: Update):
+    text = update.effective_message.text or update.effective_message.caption or ""
+    with open("blocked_messages.txt", "a", encoding="utf-8") as f:
+        f.write(text.strip() + "\n---\n")
+
 # ---------- Scam Filter ----------
 SCAM_PATTERNS = [
-    r"free\s*eth", r"air\s*drop|airdrop", r"claim\s*(your|eth|now)",
-    r"instant\s*rewards?", r"limited\s*time\s*offer",
-    r"connect\s*(your\s*)?wallet", r"verify\s*(and|to)\s*(claim|receive)",
-    r"drip|faucet"
+    r"free\s*eth", r"air\s*drop", r"claim\s*(your|eth|now)", r"bonus\s*code",
+    r"promo\s*code", r"no\s*verification", r"instant\s*win", r"casino",
+    r"bet\s*now", r"jetacas", r"crypto\s*wallet", r"send\s*btc",
+    r"\.eth\b", r"\.casino\b", r"\.crypto\b", r"no\s*id\s*required",
+    r"click\s*here", r"play\s*now", r"register\s*now", r"http[s]?://[^ ]*"
 ]
 
 def looks_suspicious(update: Update) -> bool:
@@ -88,6 +93,7 @@ async def forward_from_source(update: Update, context: ContextTypes.DEFAULT_TYPE
         return
 
     if looks_suspicious(update):
+        save_blocked_message(update)
         print("🚫 Blocked suspicious message (scam filter).")
         return
 
@@ -116,10 +122,8 @@ def main():
     print("🤖 Bot is running…")
 
     if LOCAL_TEST:
-        # Local polling for development
         app_bot.run_polling(allowed_updates=Update.ALL_TYPES)
     else:
-        # Production: use webhook (no Flask needed)
         app_bot.run_webhook(
             listen="0.0.0.0",
             port=int(os.environ.get("PORT", 10000)),
